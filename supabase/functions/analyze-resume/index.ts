@@ -327,6 +327,25 @@ ${analysis.recommendation || (finalScore >= 7 ? 'Recommended for shortlisting ba
 
     // If shortlisted, generate assignment
     if (finalScore >= 7) {
+      // Determine difficulty level based on experience
+      let difficultyLevel = 'Junior';
+      let timeLimitHours = 48;
+      
+      if (candidate.experience >= 5) {
+        difficultyLevel = 'Senior';
+        timeLimitHours = 96; // 4 days
+      } else if (candidate.experience >= 2) {
+        difficultyLevel = 'Mid';
+        timeLimitHours = 72; // 3 days
+      }
+
+      // Generate unique anti-cheat ID
+      const antiCheatId = `${candidateId}-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+      
+      // Calculate deadline
+      const deadline = new Date();
+      deadline.setHours(deadline.getHours() + timeLimitHours);
+
       const assignmentResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -338,16 +357,44 @@ ${analysis.recommendation || (finalScore >= 7 ? 'Recommended for shortlisting ba
           messages: [
             {
               role: 'system',
-              content: 'You are a technical assignment creator for fintech companies. Create practical, fintech-specific coding challenges.'
+              content: `You are a technical assignment creator for fintech companies. Create practical, unique coding challenges that test real-world skills.
+
+CRITICAL REQUIREMENTS:
+- Make each assignment UNIQUE to prevent answer reuse
+- Include randomized elements (different APIs, datasets, constraints)
+- Test the same core skill but with different variants
+- Include anti-cheating measures (time-sensitive data, unique requirements)
+- Focus on fintech-specific scenarios`
             },
             {
               role: 'user',
-              content: `Generate a coding assignment for a ${candidate.role} position in a fintech company. 
-              The assignment should:
-              - Be completable in 2-3 hours
-              - Include fintech-relevant scenarios (payments, transactions, data security, etc.)
-              - Test core technical skills for this role
-              - Include clear requirements and evaluation criteria`
+              content: `Generate a ${difficultyLevel} level coding assignment for a ${candidate.role} position in a fintech company.
+
+Experience Level: ${candidate.experience} years
+Time Limit: ${timeLimitHours} hours
+Anti-Cheat ID: ${antiCheatId}
+
+The assignment MUST:
+1. Be completable within ${timeLimitHours} hours for a ${difficultyLevel} developer
+2. Include fintech-relevant scenarios (payments, transactions, fraud detection, data security, etc.)
+3. Use a UNIQUE approach (different API, dataset, or constraint from other assignments)
+4. Require submission via GitHub repository link or deployment URL only
+5. Test these core skills: ${job.skills_required.slice(0, 3).join(', ')}
+6. Include clear functional requirements
+7. Specify evaluation criteria
+8. Include edge cases to test
+9. Be practical and realistic for a fintech environment
+
+${difficultyLevel === 'Senior' ? 'For Senior: Include system design considerations, scalability requirements, and security best practices.' : ''}
+${difficultyLevel === 'Mid' ? 'For Mid-level: Include code quality expectations, error handling, and basic optimization.' : ''}
+${difficultyLevel === 'Junior' ? 'For Junior: Focus on fundamental implementation, basic error handling, and clean code practices.' : ''}
+
+Format the response with:
+## Problem Statement
+## Requirements
+## Submission Instructions
+## Evaluation Criteria
+## Time Limit: ${timeLimitHours} hours`
             }
           ],
         }),
@@ -362,7 +409,14 @@ ${analysis.recommendation || (finalScore >= 7 ? 'Recommended for shortlisting ba
           .insert({
             candidate_id: candidateId,
             assignment_text: assignmentText,
+            difficulty_level: difficultyLevel,
+            time_limit_hours: timeLimitHours,
+            deadline: deadline.toISOString(),
+            status: 'pending',
+            anti_cheat_id: antiCheatId,
           });
+        
+        console.log(`Assignment generated for candidate ${candidateId}: ${difficultyLevel} level, ${timeLimitHours}h deadline`);
       }
     }
 

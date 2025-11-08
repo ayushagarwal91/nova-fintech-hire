@@ -17,38 +17,56 @@ export type Database = {
       assignments: {
         Row: {
           accuracy_score: number | null
+          anti_cheat_id: string | null
           assignment_text: string
           candidate_id: string
           clarity_score: number | null
           created_at: string | null
+          deadline: string | null
+          difficulty_level: string | null
           feedback: string | null
+          final_score: number | null
           id: string
           relevance_score: number | null
+          status: string | null
           submission_url: string | null
+          time_limit_hours: number | null
           updated_at: string | null
         }
         Insert: {
           accuracy_score?: number | null
+          anti_cheat_id?: string | null
           assignment_text: string
           candidate_id: string
           clarity_score?: number | null
           created_at?: string | null
+          deadline?: string | null
+          difficulty_level?: string | null
           feedback?: string | null
+          final_score?: number | null
           id?: string
           relevance_score?: number | null
+          status?: string | null
           submission_url?: string | null
+          time_limit_hours?: number | null
           updated_at?: string | null
         }
         Update: {
           accuracy_score?: number | null
+          anti_cheat_id?: string | null
           assignment_text?: string
           candidate_id?: string
           clarity_score?: number | null
           created_at?: string | null
+          deadline?: string | null
+          difficulty_level?: string | null
           feedback?: string | null
+          final_score?: number | null
           id?: string
           relevance_score?: number | null
+          status?: string | null
           submission_url?: string | null
+          time_limit_hours?: number | null
           updated_at?: string | null
         }
         Relationships: [

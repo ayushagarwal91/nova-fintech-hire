@@ -2,18 +2,23 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus } from "lucide-react";
 import { StatsCards } from "@/components/dashboard/StatsCards";
 import { CandidateFilters } from "@/components/dashboard/CandidateFilters";
 import { CandidatesTable } from "@/components/dashboard/CandidatesTable";
+import { AssignmentsTable } from "@/components/dashboard/AssignmentsTable";
+import { AssignmentStats } from "@/components/dashboard/AssignmentStats";
 import { useCandidates } from "@/hooks/useCandidates";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { useAssignments } from "@/hooks/useAssignments";
 import { Candidate } from "@/types";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { candidates, isLoading } = useCandidates();
   const { stats, isLoading: statsLoading } = useDashboardStats();
+  const { data: assignments = [], isLoading: assignmentsLoading } = useAssignments();
   
   const [filteredCandidates, setFilteredCandidates] = useState<Candidate[]>([]);
   const [roleFilter, setRoleFilter] = useState<string>("all");
@@ -67,24 +72,47 @@ const Dashboard = () => {
 
         <StatsCards stats={stats} />
 
-        <CandidateFilters 
-          searchQuery={searchQuery}
-          roleFilter={roleFilter}
-          statusFilter={statusFilter}
-          onSearchChange={setSearchQuery}
-          onRoleChange={setRoleFilter}
-          onStatusChange={setStatusFilter}
-        />
+        <Tabs defaultValue="candidates" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="candidates">Candidates</TabsTrigger>
+            <TabsTrigger value="assignments">Assignments</TabsTrigger>
+          </TabsList>
 
-        <Card className="shadow-elevated">
-          <div className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Candidates</h2>
-            <CandidatesTable 
-              candidates={filteredCandidates}
-              isLoading={isLoading}
+          <TabsContent value="candidates" className="space-y-6">
+            <CandidateFilters 
+              searchQuery={searchQuery}
+              roleFilter={roleFilter}
+              statusFilter={statusFilter}
+              onSearchChange={setSearchQuery}
+              onRoleChange={setRoleFilter}
+              onStatusChange={setStatusFilter}
             />
-          </div>
-        </Card>
+
+            <Card className="shadow-elevated">
+              <div className="p-6">
+                <h2 className="text-xl font-semibold mb-4">Candidates</h2>
+                <CandidatesTable 
+                  candidates={filteredCandidates}
+                  isLoading={isLoading}
+                />
+              </div>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="assignments" className="space-y-6">
+            <AssignmentStats assignments={assignments} />
+            
+            <Card className="shadow-elevated">
+              <div className="p-6">
+                <h2 className="text-xl font-semibold mb-4">Assignment Tracking</h2>
+                <AssignmentsTable 
+                  assignments={assignments}
+                  isLoading={assignmentsLoading}
+                />
+              </div>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
