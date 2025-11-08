@@ -13,6 +13,7 @@ import { useCandidates } from "@/hooks/useCandidates";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { useAssignments } from "@/hooks/useAssignments";
 import { Candidate } from "@/types";
+import { printResumeToConsole } from "@/utils/resumeViewer";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -28,6 +29,14 @@ const Dashboard = () => {
   useEffect(() => {
     filterCandidates();
   }, [candidates, roleFilter, statusFilter, searchQuery]);
+
+  // Print Armaan test 1's resume to console
+  useEffect(() => {
+    const armaanCandidate = candidates.find(c => c.name === "Armaan test 1");
+    if (armaanCandidate) {
+      printResumeToConsole(armaanCandidate.id);
+    }
+  }, [candidates]);
 
   const filterCandidates = () => {
     let filtered = [...candidates];
