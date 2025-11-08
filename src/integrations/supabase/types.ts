@@ -74,6 +74,7 @@ export type Database = {
           email: string
           experience: number
           id: string
+          job_id: string | null
           name: string
           resume_feedback: string | null
           resume_score: number | null
@@ -87,6 +88,7 @@ export type Database = {
           email: string
           experience: number
           id?: string
+          job_id?: string | null
           name: string
           resume_feedback?: string | null
           resume_score?: number | null
@@ -100,6 +102,7 @@ export type Database = {
           email?: string
           experience?: number
           id?: string
+          job_id?: string | null
           name?: string
           resume_feedback?: string | null
           resume_score?: number | null
@@ -108,7 +111,15 @@ export type Database = {
           status?: Database["public"]["Enums"]["candidate_status"] | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "candidates_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       interviews: {
         Row: {
@@ -158,6 +169,45 @@ export type Database = {
           },
         ]
       }
+      jobs: {
+        Row: {
+          created_at: string
+          description: string
+          experience_required: number
+          id: string
+          requirements: string
+          role: Database["public"]["Enums"]["app_role"]
+          skills_required: string[]
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          experience_required: number
+          id?: string
+          requirements: string
+          role: Database["public"]["Enums"]["app_role"]
+          skills_required?: string[]
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          experience_required?: number
+          id?: string
+          requirements?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          skills_required?: string[]
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       candidate_rankings: {
@@ -168,12 +218,22 @@ export type Database = {
           email: string | null
           id: string | null
           interview_score: number | null
+          job_id: string | null
+          job_title: string | null
           name: string | null
           resume_score: number | null
           role: Database["public"]["Enums"]["app_role"] | null
           status: Database["public"]["Enums"]["candidate_status"] | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "candidates_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Functions: {
