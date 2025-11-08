@@ -60,20 +60,39 @@ export const useApplicationSubmit = () => {
 
       if (candidateError) throw candidateError;
 
+      // Show initial toast that analysis is starting
+      toast({
+        title: "Application Submitted! 🎯",
+        description: "AI is analyzing your resume against the job requirements...",
+      });
+
       // Call AI resume analysis edge function
-      const { error: analysisError } = await supabase.functions.invoke('analyze-resume', {
+      const { data: analysisData, error: analysisError } = await supabase.functions.invoke('analyze-resume', {
         body: { candidateId: candidate.id, resumePath: uploadData.path }
       });
 
       if (analysisError) {
         console.error('Analysis error:', analysisError);
-        // Don't fail the submission if analysis fails
+        toast({
+          title: "Analysis In Progress",
+          description: "Your application is submitted. Resume analysis will complete shortly.",
+          variant: "default",
+        });
+      } else if (analysisData) {
+        // Show result based on score
+        const { score, status } = analysisData;
+        if (status === "Shortlisted") {
+          toast({
+            title: "Congratulations! 🎉",
+            description: `Your resume scored ${score}/10! You've been shortlisted for the next round. Check your email for next steps.`,
+          });
+        } else {
+          toast({
+            title: "Application Received",
+            description: `Thank you for applying. Your resume has been reviewed (Score: ${score}/10). We'll contact you if there's a match.`,
+          });
+        }
       }
-
-      toast({
-        title: "Application Submitted!",
-        description: "We're analyzing your resume against the job requirements. You'll hear from us soon!",
-      });
 
       navigate('/');
     } catch (error: any) {
