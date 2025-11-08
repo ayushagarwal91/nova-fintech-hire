@@ -155,7 +155,60 @@ serve(async (req) => {
     
     console.log(`Successfully extracted resume text (${resumeText.length} characters)`);
 
-    // Call Lovable AI to analyze resume with specific scoring criteria
+    // Early validation - check if resume contains basic technical keywords
+    const hasBasicTechKeywords = resumeText.match(/(Python|Node\.?js|Java|C\+\+|JavaScript|TypeScript|Django|Flask|Express|Spring|API|REST|GraphQL|SQL|PostgreSQL|MySQL|MongoDB|Redis|AWS|Azure|GCP|Docker|Kubernetes|Git|Backend|Software Engineer|Developer)/i);
+    
+    if (!hasBasicTechKeywords) {
+      console.log('Resume does not contain basic technical keywords - likely not a technical candidate');
+      
+      const detailedFeedback = `
+RESUME ANALYSIS RESULTS
+
+Overall Score: 0/10
+
+SCORING BREAKDOWN:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Skills & Knowledge (50%): 0/5
+This resume does not contain any identifiable technical skills relevant to backend engineering or software development.
+
+• Experience Match (30%): 0/3
+No relevant technical work experience found. The resume does not reference software development, engineering roles, or technical projects.
+
+• Overall Fit (20%): 0/2
+The resume appears to be unrelated to backend engineering positions.
+
+CRITICAL ISSUE:
+⚠ This resume does not contain basic technical keywords expected for backend engineering roles (e.g., programming languages, frameworks, databases, cloud platforms).
+
+RECOMMENDATION:
+Not recommended for shortlisting. This candidate's background does not align with technical requirements for backend engineering roles. Please verify that the correct resume was submitted.
+      `.trim();
+
+      const { error: updateError } = await supabase
+        .from('candidates')
+        .update({
+          resume_score: 0,
+          resume_feedback: detailedFeedback,
+          status: 'Not Shortlisted',
+        })
+        .eq('id', candidateId);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          score: 0,
+          status: 'Not Shortlisted',
+          feedback: detailedFeedback
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Call Lovable AI to analyze resume with STRICT scoring criteria
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -167,50 +220,65 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are an expert HR recruiter analyzing resumes. Evaluate candidates using this EXACT scoring system:
+            content: `You are an expert technical recruiter specializing in fintech backend engineering roles.
+Your task is to analyze a candidate's resume against a job description with STRICT scoring rules.
+
+CRITICAL RULES:
+1. NEVER assume missing information — if a skill or experience is not EXPLICITLY mentioned, treat it as absent
+2. Penalize irrelevant backgrounds (finance operations, sales, marketing, non-technical) by deducting up to 50% of the total score
+3. Award points ONLY for explicitly mentioned technical skills, actual work experience, and relevant context
+4. Be harsh on candidates with non-technical backgrounds trying to apply for technical roles
 
 SCORING BREAKDOWN (Total: 10 points):
+
 1. Skills & Knowledge Match (5 points / 50% weight):
-   - Evaluate how well the candidate's technical skills, domain knowledge, and expertise match the required skills
-   - Consider both exact matches and transferable skills
-   - Maximum: 5 points
+   - Award points ONLY if the skill is EXPLICITLY mentioned in the resume
+   - Look for: Programming languages (Python, Node.js, Java, Go, etc.), Frameworks (Django, Express, Spring, etc.), Databases (PostgreSQL, MySQL, MongoDB, Redis), Cloud (AWS, Azure, GCP), Tools (Docker, Kubernetes, Git)
+   - If NO technical skills are found: 0 points
+   - If only 1-2 basic skills: Maximum 1-2 points
+   - If 3-5 relevant skills: 2-3 points
+   - If 6+ skills with depth: 4-5 points
 
 2. Experience Match (3 points / 30% weight):
-   - Compare years of experience vs required experience
-   - Evaluate relevance of past roles to this position
-   - Assess progression and career trajectory
-   - Maximum: 3 points
+   - Award points ONLY if ACTUAL work experience is found related to backend engineering or software development
+   - Look for: Job titles (Backend Engineer, Software Developer, etc.), Projects (APIs, microservices, databases), Years of experience
+   - If resume shows finance, sales, operations, or non-technical roles: 0 points
+   - If only academic projects or bootcamp experience: Maximum 1 point
+   - If 1-2 years relevant work experience: 1-2 points
+   - If 3+ years relevant work experience: 2-3 points
 
-3. Overall Fit (2 points / 20% weight):
-   - Education background and certifications
-   - Communication skills and presentation
-   - Achievements and quantifiable results
-   - Cultural fit indicators
-   - Maximum: 2 points
+3. Overall Fit (20% / 2 points):
+   - Award points based on whether context aligns with the job
+   - Look for: Fintech domain experience, Product scale, System design, Technical depth
+   - If resume doesn't reference any technical projects or software work: 0 points
+   - If basic technical context: 1 point
+   - If strong fintech-relevant context: 2 points
 
-IMPORTANT: 
-- Provide scores for each category
-- Final score = Skills Score + Experience Score + Overall Fit Score (max 10)
-- Be precise and evidence-based
-- Candidates scoring 7+ should be recommended for shortlisting
+PENALTY RULES:
+- If resume is clearly from a non-technical background (finance analyst, sales, marketing): Deduct 50% from final score
+- If resume has zero programming languages mentioned: Maximum score cannot exceed 3/10
+- If resume has no technical work experience: Maximum score cannot exceed 4/10
 
-Respond in JSON format:
+OUTPUT FORMAT - Respond in JSON:
 {
   "skills_score": <0-5>,
   "experience_score": <0-3>,
   "overall_fit_score": <0-2>,
   "total_score": <0-10>,
-  "skills_analysis": "<detailed skills evaluation>",
-  "experience_analysis": "<detailed experience evaluation>",
-  "fit_analysis": "<overall fit evaluation>",
-  "strengths": ["<strength 1>", "<strength 2>", ...],
-  "concerns": ["<concern 1>", "<concern 2>", ...],
-  "recommendation": "<shortlist or not shortlist with reason>"
-}`
+  "skills_analysis": "<step-by-step reasoning: list EXPLICIT skills found or state 'No technical skills mentioned'>",
+  "experience_analysis": "<step-by-step reasoning: describe ACTUAL technical work experience or state 'No relevant technical experience'>",
+  "fit_analysis": "<step-by-step reasoning: assess domain and context fit>",
+  "strengths": ["<only list EXPLICITLY mentioned strengths>"],
+  "concerns": ["<list gaps, missing skills, or irrelevant background>"],
+  "penalty_applied": "<if any penalty was applied, explain why>",
+  "recommendation": "<Shortlist / Reject / Need Clarification with detailed reasoning>"
+}
+
+REMEMBER: Be strict. If information is not explicitly in the resume, it does not exist.`
           },
           {
             role: 'user',
-            content: `Analyze this resume for the following position:
+            content: `Analyze this resume for the following backend engineering position with STRICT evaluation:
 
 JOB DETAILS:
 Title: ${job.title}
@@ -225,10 +293,18 @@ ${job.requirements}
 Required Skills: ${job.skills_required.join(', ')}
 Required Experience: ${job.experience_required} years
 
-CANDIDATE'S RESUME:
+CANDIDATE'S RESUME TEXT:
 ${resumeText}
 
-Analyze this candidate using the exact scoring criteria (Skills: 50%, Experience: 30%, Overall Fit: 20%). Provide detailed breakdown and evidence from the resume.`
+INSTRUCTIONS:
+1. List ONLY the technical skills that are EXPLICITLY mentioned in the resume
+2. Identify ONLY actual work experience (job titles, companies, duration) related to backend/software engineering
+3. If the resume is from a non-technical background (finance, sales, marketing), apply the 50% penalty
+4. If no programming languages are mentioned, maximum score is 3/10
+5. If no technical work experience is found, maximum score is 4/10
+6. Provide step-by-step reasoning showing what you found (or didn't find) in the resume
+
+Be harsh and strict. Award points only for explicit evidence.`
           }
         ],
       }),
@@ -276,9 +352,9 @@ Analyze this candidate using the exact scoring criteria (Skills: 50%, Experience
     }
 
     // Ensure we have a total_score
-    const finalScore = Math.round(analysis.total_score || 7);
+    const finalScore = Math.round(analysis.total_score || 0);
     
-    // Format detailed feedback
+    // Format detailed feedback with strict format
     const detailedFeedback = `
 RESUME ANALYSIS RESULTS
 
@@ -286,25 +362,29 @@ Overall Score: ${finalScore}/10
 
 SCORING BREAKDOWN:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-• Skills & Knowledge (50%): ${analysis.skills_score}/5
-${analysis.skills_analysis || 'Skills evaluated based on job requirements.'}
+SKILL MATCH (50%): ${analysis.skills_score}/5
+${analysis.skills_analysis || 'Skills evaluated based on explicit mentions in resume.'}
 
-• Experience Match (30%): ${analysis.experience_score}/3
-${analysis.experience_analysis || 'Experience evaluated against requirements.'}
+EXPERIENCE MATCH (30%): ${analysis.experience_score}/3
+${analysis.experience_analysis || 'Experience evaluated based on actual work history.'}
 
-• Overall Fit (20%): ${analysis.overall_fit_score}/2
-${analysis.fit_analysis || 'Overall fit assessed.'}
+OVERALL FIT (20%): ${analysis.overall_fit_score}/2
+${analysis.fit_analysis || 'Overall fit assessed based on domain and context.'}
 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 STRENGTHS:
-${analysis.strengths?.map((s: string) => `✓ ${s}`).join('\n') || '• Pending detailed review'}
+${analysis.strengths?.map((s: string) => `✓ ${s}`).join('\n') || '• No significant strengths identified'}
 
-${analysis.concerns && analysis.concerns.length > 0 ? `
-AREAS FOR CONSIDERATION:
-${analysis.concerns.map((c: string) => `• ${c}`).join('\n')}
+WEAKNESSES:
+${analysis.concerns?.map((c: string) => `✗ ${c}`).join('\n') || '• Pending detailed review'}
+
+${analysis.penalty_applied ? `
+PENALTY APPLIED:
+⚠ ${analysis.penalty_applied}
 ` : ''}
 
 RECOMMENDATION:
-${analysis.recommendation || (finalScore >= 7 ? 'Recommended for shortlisting based on strong overall match.' : 'Not recommended for immediate shortlisting.')}
+${analysis.recommendation || (finalScore >= 7 ? 'Recommended for shortlisting based on technical qualifications.' : 'Not recommended for shortlisting due to insufficient technical qualifications.')}
     `.trim();
 
     // Update candidate with analysis results
