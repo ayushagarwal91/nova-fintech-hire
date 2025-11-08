@@ -15,6 +15,27 @@ export const useCandidates = () => {
 
   useEffect(() => {
     fetchCandidates();
+
+    // Subscribe to realtime changes
+    const channel = supabase
+      .channel('candidates-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'candidates'
+        },
+        () => {
+          console.log('Candidate data changed, refetching...');
+          fetchCandidates();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchCandidates = async () => {
