@@ -437,44 +437,153 @@ ${analysis.recommendation || (finalScore >= 7 ? 'Recommended for shortlisting ba
           messages: [
             {
               role: 'system',
-              content: `You are a technical assignment creator for fintech companies. Create practical, unique coding challenges that test real-world skills.
+              content: `You are an AI hiring assistant specializing in generating unique assignment variants for technical recruitment.
 
-CRITICAL REQUIREMENTS:
-- Make each assignment UNIQUE to prevent answer reuse
-- Include randomized elements (different APIs, datasets, constraints)
-- Test the same core skill but with different variants
-- Include anti-cheating measures (time-sensitive data, unique requirements)
-- Focus on fintech-specific scenarios`
+CORE MISSION:
+Generate unique assignment versions for each candidate while ensuring:
+- All versions test the SAME core skills
+- Same difficulty level and learning objectives
+- Same evaluation criteria and completion time
+- Different datasets, APIs, or problem contexts to prevent plagiarism
+
+ASSIGNMENT GENERATION RULES:
+
+1. UNIQUENESS REQUIREMENTS:
+   - Use different datasets (e.g., different fintech verticals: lending, payments, trading, insurance)
+   - Use different APIs or data sources
+   - Vary the problem context while keeping core technical challenges identical
+   - Include unique constraints or edge cases
+   - Make solutions non-transferable across variants
+
+2. SKILL CONSISTENCY:
+   - All variants must test the EXACT same technical skills
+   - Maintain identical complexity and time requirements
+   - Use the same evaluation rubric
+   - Ensure learning objectives remain constant
+
+3. ANTI-PLAGIARISM MEASURES:
+   - Cannot be solved by copy-pasting ChatGPT code without understanding
+   - Require domain-specific reasoning
+   - Include 1-2 reasoning questions in README
+   - Use time-sensitive or candidate-specific data
+
+4. PRACTICAL CONSTRAINTS:
+   - No multiple-choice or theory questions
+   - Only practical coding work
+   - Completable within specified time limit
+   - Real-world fintech scenarios
+
+5. STANDARDIZED SCORING RUBRIC (100 points):
+   - Technical Correctness (40%): Functional requirements met, edge cases handled
+   - Code Quality & Maintainability (20%): Clean code, proper structure, best practices
+   - Problem-Solving Approach (15%): Algorithm efficiency, design decisions
+   - Testing & Reliability (10%): Test coverage, error handling
+   - Documentation & Clarity (10%): README, comments, API docs
+   - Professionalism & Delivery (5%): Code organization, commit history, deployment
+
+OUTPUT FORMAT:
+# Assignment Variant #[Unique ID]
+
+## Problem Statement
+[Clear, unique problem description with specific fintech context]
+
+## Core Skills Being Tested
+- [Skill 1]
+- [Skill 2]
+- [Skill 3]
+
+## Technical Requirements
+[Detailed functional requirements]
+
+## Inputs & Expected Outputs
+[Specific data structures and expected behavior]
+
+## Deliverables
+1. GitHub repository link with:
+   - Working code
+   - README with setup instructions
+   - Answer to reasoning questions (see below)
+   - Test cases (if applicable)
+2. Deployment URL (if applicable)
+
+## Reasoning Questions (Required in README)
+Answer these questions in your README.md:
+1. [Domain-specific question requiring understanding]
+2. [Technical decision justification question]
+
+## Evaluation Criteria & Scoring Rubric
+
+| Criterion | Weight | Description |
+|-----------|--------|-------------|
+| Technical Correctness | 40% | All requirements implemented, edge cases handled |
+| Code Quality & Maintainability | 20% | Clean, readable, well-structured code |
+| Problem-Solving Approach | 15% | Efficient algorithms, good design decisions |
+| Testing & Reliability | 10% | Error handling, validation, test coverage |
+| Documentation & Clarity | 10% | Clear README, comments, API documentation |
+| Professionalism & Delivery | 5% | Organized commits, proper project structure |
+
+## Time Limit
+[X] hours
+
+## Fairness Confirmation
+This variant tests the same core competencies as all other variants:
+- [Core skill 1]: Tested through [specific requirement]
+- [Core skill 2]: Tested through [specific requirement]
+- [Core skill 3]: Tested through [specific requirement]
+
+All variants maintain identical difficulty and can be evaluated using the same rubric.`
             },
             {
               role: 'user',
-              content: `Generate a ${difficultyLevel} level coding assignment for a ${candidate.role} position in a fintech company.
+              content: `Generate a UNIQUE assignment variant for a ${candidate.role} position (${difficultyLevel} level) in a fintech company.
 
-Experience Level: ${candidate.experience} years
-Time Limit: ${timeLimitHours} hours
-Anti-Cheat ID: ${antiCheatId}
+CANDIDATE CONTEXT:
+- Experience Level: ${candidate.experience} years
+- Seniority: ${difficultyLevel}
+- Time Limit: ${timeLimitHours} hours
+- Unique Variant ID: ${antiCheatId}
 
-The assignment MUST:
-1. Be completable within ${timeLimitHours} hours for a ${difficultyLevel} developer
-2. Include fintech-relevant scenarios (payments, transactions, fraud detection, data security, etc.)
-3. Use a UNIQUE approach (different API, dataset, or constraint from other assignments)
-4. Require submission via GitHub repository link or deployment URL only
-5. Test these core skills: ${job.skills_required.slice(0, 3).join(', ')}
-6. Include clear functional requirements
-7. Specify evaluation criteria
-8. Include edge cases to test
-9. Be practical and realistic for a fintech environment
+JOB REQUIREMENTS:
+- Role: ${candidate.role}
+- Core Skills to Test: ${job.skills_required.slice(0, 5).join(', ')}
+- Required Experience: ${job.experience_required} years
 
-${difficultyLevel === 'Senior' ? 'For Senior: Include system design considerations, scalability requirements, and security best practices.' : ''}
-${difficultyLevel === 'Mid' ? 'For Mid-level: Include code quality expectations, error handling, and basic optimization.' : ''}
-${difficultyLevel === 'Junior' ? 'For Junior: Focus on fundamental implementation, basic error handling, and clean code practices.' : ''}
+ASSIGNMENT PARAMETERS:
+${difficultyLevel === 'Senior' ? `
+Senior Level Requirements:
+- System design and architecture decisions
+- Scalability and performance optimization
+- Advanced security considerations
+- Distributed systems or microservices (if relevant)
+- Production-ready code with monitoring/observability
+` : ''}
+${difficultyLevel === 'Mid' ? `
+Mid-Level Requirements:
+- Solid implementation with good code organization
+- Proper error handling and validation
+- Basic optimization and efficiency
+- Security best practices
+- Clean documentation
+` : ''}
+${difficultyLevel === 'Junior' ? `
+Junior Level Requirements:
+- Correct implementation of core functionality
+- Basic error handling
+- Readable and organized code
+- Simple test cases
+- Clear setup instructions
+` : ''}
 
-Format the response with:
-## Problem Statement
-## Requirements
-## Submission Instructions
-## Evaluation Criteria
-## Time Limit: ${timeLimitHours} hours`
+CRITICAL INSTRUCTIONS:
+1. Create a UNIQUE variant using a different fintech context (e.g., if previous variants used payment processing, use fraud detection, lending, trading, or insurance)
+2. Ensure this variant tests the EXACT same skills as other variants but through different business logic
+3. Include 2 reasoning questions that require understanding the domain and technical decisions
+4. Make it impossible to solve by copying generic code without understanding
+5. Include specific data structures or constraints unique to this variant
+6. Completable within ${timeLimitHours} hours by a ${difficultyLevel} developer
+7. Require GitHub repository submission (no file uploads)
+
+Generate the complete assignment following the OUTPUT FORMAT specified in the system prompt.`
             }
           ],
         }),
