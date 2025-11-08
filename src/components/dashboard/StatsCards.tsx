@@ -8,13 +8,13 @@ interface StatsCardsProps {
 
 export const StatsCards = ({ stats }: StatsCardsProps) => {
   return (
-    <div className="space-y-6 mb-8">
-      {/* First Row - Existing Stats */}
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card className="p-6 shadow-card">
+    <div className="mb-8">
+      {/* Main Stats Grid - 4 columns */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-4">
+        <Card className="p-6 shadow-card hover:shadow-elevated transition-shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Total Candidates</p>
+              <p className="text-sm font-medium text-muted-foreground mb-1">Total Candidates</p>
               <p className="text-3xl font-bold text-foreground">{stats.total}</p>
             </div>
             <div className="rounded-lg bg-primary/10 p-3">
@@ -23,10 +23,10 @@ export const StatsCards = ({ stats }: StatsCardsProps) => {
           </div>
         </Card>
 
-        <Card className="p-6 shadow-card">
+        <Card className="p-6 shadow-card hover:shadow-elevated transition-shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Shortlisted</p>
+              <p className="text-sm font-medium text-muted-foreground mb-1">Shortlisted</p>
               <p className="text-3xl font-bold text-foreground">{stats.shortlisted}</p>
             </div>
             <div className="rounded-lg bg-accent/10 p-3">
@@ -35,25 +35,10 @@ export const StatsCards = ({ stats }: StatsCardsProps) => {
           </div>
         </Card>
 
-        <Card className="p-6 shadow-card">
+        <Card className="p-6 shadow-card hover:shadow-elevated transition-shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Avg Resume Score</p>
-              <p className="text-3xl font-bold text-foreground">{stats.avgScore}</p>
-            </div>
-            <div className="rounded-lg bg-primary/10 p-3">
-              <BarChart3 className="h-6 w-6 text-primary" />
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Second Row - Job Stats */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="p-6 shadow-card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Open Positions</p>
+              <p className="text-sm font-medium text-muted-foreground mb-1">Open Positions</p>
               <p className="text-3xl font-bold text-foreground">{stats.openPositions}</p>
             </div>
             <div className="rounded-lg bg-primary/10 p-3">
@@ -62,10 +47,10 @@ export const StatsCards = ({ stats }: StatsCardsProps) => {
           </div>
         </Card>
 
-        <Card className="p-6 shadow-card">
+        <Card className="p-6 shadow-card hover:shadow-elevated transition-shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Active Job Postings</p>
+              <p className="text-sm font-medium text-muted-foreground mb-1">Active Postings</p>
               <p className="text-3xl font-bold text-foreground">{stats.activeJobPostings}</p>
             </div>
             <div className="rounded-lg bg-accent/10 p-3">
@@ -75,34 +60,25 @@ export const StatsCards = ({ stats }: StatsCardsProps) => {
         </Card>
       </div>
 
-      {/* Third Row - Interview Stats */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="p-6 shadow-card">
+      {/* Secondary Stats Grid - 3 columns */}
+      <div className="grid gap-4 md:grid-cols-3 mb-4">
+        <Card className="p-6 shadow-card hover:shadow-elevated transition-shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Interviews Scheduled</p>
-              <div className="flex items-baseline gap-4">
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{stats.interviewsToday}</p>
-                  <p className="text-xs text-muted-foreground">Today</p>
-                </div>
-                <div className="h-12 w-px bg-border" />
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{stats.interviewsThisWeek}</p>
-                  <p className="text-xs text-muted-foreground">This Week</p>
-                </div>
-              </div>
+              <p className="text-sm font-medium text-muted-foreground mb-1">Avg Resume Score</p>
+              <p className="text-3xl font-bold text-foreground">{stats.avgScore}</p>
+              <p className="text-xs text-muted-foreground mt-1">out of 10</p>
             </div>
             <div className="rounded-lg bg-primary/10 p-3">
-              <Calendar className="h-6 w-6 text-primary" />
+              <BarChart3 className="h-6 w-6 text-primary" />
             </div>
           </div>
         </Card>
 
-        <Card className="p-6 shadow-card">
+        <Card className="p-6 shadow-card hover:shadow-elevated transition-shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Average Time to Hire</p>
+              <p className="text-sm font-medium text-muted-foreground mb-1">Avg Time to Hire</p>
               <p className="text-3xl font-bold text-foreground">{stats.avgTimeToHire}</p>
               <p className="text-xs text-muted-foreground mt-1">days</p>
             </div>
@@ -111,15 +87,13 @@ export const StatsCards = ({ stats }: StatsCardsProps) => {
             </div>
           </div>
         </Card>
-      </div>
 
-      {/* Fourth Row - Conversion Rate */}
-      <div className="grid gap-6 md:grid-cols-1">
-        <Card className="p-6 shadow-card">
+        <Card className="p-6 shadow-card hover:shadow-elevated transition-shadow">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Conversion Rate (Applied → Hired)</p>
+              <p className="text-sm font-medium text-muted-foreground mb-1">Conversion Rate</p>
               <p className="text-3xl font-bold text-foreground">{stats.conversionRate}%</p>
+              <p className="text-xs text-muted-foreground mt-1">applied → hired</p>
             </div>
             <div className="rounded-lg bg-primary/10 p-3">
               <Percent className="h-6 w-6 text-primary" />
@@ -127,6 +101,36 @@ export const StatsCards = ({ stats }: StatsCardsProps) => {
           </div>
         </Card>
       </div>
+
+      {/* Interview Stats - Full Width */}
+      <Card className="p-6 shadow-card hover:shadow-elevated transition-shadow">
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <p className="text-sm font-medium text-muted-foreground mb-3">Interviews Scheduled</p>
+            <div className="flex items-center gap-8">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-primary/10 p-3">
+                  <Calendar className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-foreground">{stats.interviewsToday}</p>
+                  <p className="text-xs text-muted-foreground">Today</p>
+                </div>
+              </div>
+              <div className="h-16 w-px bg-border" />
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-accent/10 p-3">
+                  <Calendar className="h-6 w-6 text-accent" />
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-foreground">{stats.interviewsThisWeek}</p>
+                  <p className="text-xs text-muted-foreground">This Week</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 };
