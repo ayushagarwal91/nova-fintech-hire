@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.evaluate-assignment]
 verify_jwt = false
+
+[functions.get-resume-text]
+verify_jwt = false
