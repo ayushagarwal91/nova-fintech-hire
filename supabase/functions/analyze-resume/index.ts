@@ -54,40 +54,61 @@ serve(async (req) => {
       throw new Error('Failed to download resume');
     }
 
-    console.log('Attempting to extract text from resume...');
+    const mimeType = resumeData.type || 'application/pdf';
+    const fileSize = resumeData.size;
     
-    // First, try simple text extraction (works for most PDFs with embedded text)
-    let resumeText = '';
-    try {
-      resumeText = await resumeData.text();
-      console.log(`Extracted ${resumeText.length} characters from resume`);
-    } catch (error) {
-      console.log('Direct text extraction failed:', error);
+    console.log(`Processing resume: ${mimeType}, size: ${fileSize} bytes`);
+    
+    // Limit file size to 10MB
+    if (fileSize > 10 * 1024 * 1024) {
+      throw new Error('Resume file is too large. Maximum file size is 10MB.');
     }
-
-    // If text extraction failed or produced insufficient text, use OCR (for scanned PDFs/images)
-    if (!resumeText || resumeText.trim().length < 100) {
-      console.log('Using OCR for text extraction...');
-      
-      const fileSize = resumeData.size;
-      // Limit OCR to files under 5MB to prevent memory issues
-      if (fileSize > 5 * 1024 * 1024) {
-        throw new Error('Resume file is too large for OCR processing. Please ensure the PDF has embedded text or reduce file size.');
+    
+    let resumeText = '';
+    
+    // Determine processing strategy based on file type
+    const isImageFile = mimeType.startsWith('image/');
+    const isPdfFile = mimeType === 'application/pdf';
+    const isTextFile = mimeType === 'text/plain';
+    
+    // For plain text files, just extract directly
+    if (isTextFile) {
+      console.log('Extracting text from plain text file...');
+      resumeText = await resumeData.text();
+    }
+    // For PDF files, try text extraction first
+    else if (isPdfFile) {
+      console.log('Attempting to extract text from PDF...');
+      try {
+        resumeText = await resumeData.text();
+        console.log(`Extracted ${resumeText.length} characters from PDF`);
+        
+        // If PDF has minimal text, it's likely scanned - use OCR
+        if (resumeText.trim().length < 100) {
+          console.log('PDF appears to be scanned, switching to OCR...');
+          resumeText = '';
+        }
+      } catch (error) {
+        console.log('PDF text extraction failed, will use OCR:', error);
       }
-
-      // Convert to base64 efficiently
+    }
+    
+    // If we don't have text yet, use OCR (for images, scanned PDFs, or other formats)
+    if (!resumeText || resumeText.trim().length < 100) {
+      console.log('Using AI vision to extract text from document...');
+      
+      // Convert to base64 for vision model
       const arrayBuffer = await resumeData.arrayBuffer();
       const uint8Array = new Uint8Array(arrayBuffer);
       
-      // Use btoa with proper binary string conversion (more efficient for smaller files)
+      // Convert to binary string in chunks to avoid stack overflow
       let binaryString = '';
       for (let i = 0; i < uint8Array.length; i++) {
         binaryString += String.fromCharCode(uint8Array[i]);
       }
       const base64Resume = btoa(binaryString);
-      const mimeType = resumeData.type || 'application/pdf';
       
-      // Use Lovable AI with vision to extract text
+      // Use Lovable AI with vision capabilities
       const ocrResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -102,7 +123,7 @@ serve(async (req) => {
               content: [
                 {
                   type: 'text',
-                  text: 'Extract all text content from this resume/CV document. Include all sections: personal information, work experience, education, skills, certifications, etc. Provide the extracted text in a clear, structured format.'
+                  text: 'Extract ALL text content from this resume/CV document. Include every section: contact information, summary, work experience, education, skills, certifications, projects, etc. Provide the complete extracted text in a clear format. Do not summarize - extract everything.'
                 },
                 {
                   type: 'image_url',
@@ -117,18 +138,22 @@ serve(async (req) => {
       });
 
       if (!ocrResponse.ok) {
-        throw new Error(`OCR extraction failed: ${ocrResponse.statusText}`);
+        const errorText = await ocrResponse.text();
+        console.error('AI vision extraction failed:', errorText);
+        throw new Error(`Unable to read resume. Error: ${ocrResponse.statusText}`);
       }
 
       const ocrData = await ocrResponse.json();
       resumeText = ocrData.choices[0].message.content;
-      console.log('OCR extraction successful');
+      console.log(`AI vision extracted ${resumeText.length} characters from document`);
     }
 
     // Final validation
     if (!resumeText || resumeText.trim().length < 50) {
-      throw new Error('Unable to extract sufficient text from resume. Please ensure the file contains readable text.');
+      throw new Error('Unable to extract sufficient text from resume. Please ensure the document is readable and contains text.');
     }
+    
+    console.log(`Successfully extracted resume text (${resumeText.length} characters)`);
 
     // Call Lovable AI to analyze resume with specific scoring criteria
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
