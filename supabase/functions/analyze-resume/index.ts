@@ -76,9 +76,36 @@ serve(async (req) => {
       console.log('Extracting text from plain text file...');
       resumeText = await resumeData.text();
     }
-    // For PDF and image files, go OCR-FIRST (most reliable for resumes)
-    else if (isPdfFile || isImageFile) {
-      console.log(`Processing ${isPdfFile ? 'PDF' : 'image'} with OCR-first approach...`);
+    // For PDF files, try text extraction FIRST before OCR
+    else if (isPdfFile) {
+      console.log('Processing PDF - attempting text extraction first...');
+      try {
+        resumeText = await resumeData.text();
+        console.log(`Extracted ${resumeText.length} characters from PDF`);
+        
+        // If PDF has minimal text, it's likely scanned - use OCR
+        if (resumeText.trim().length < 100) {
+          console.log('PDF appears to be scanned or has minimal text, switching to OCR...');
+          resumeText = '';
+        }
+      } catch (error) {
+        console.log('PDF text extraction failed, will use OCR:', error);
+        resumeText = '';
+      }
+    }
+    // For image files, we'll need OCR
+    else if (isImageFile) {
+      console.log('Image file detected, will use OCR...');
+      resumeText = ''; // Will trigger OCR below
+    }
+    // Unsupported file type
+    else {
+      throw new Error(`Unsupported file type: ${mimeType}. Please upload PDF, image, or text files only.`);
+    }
+    
+    // If we don't have text yet (images or scanned PDFs), use OCR
+    if (!resumeText || resumeText.trim().length < 100) {
+      console.log(`Using AI vision for OCR extraction...`);
       
       // Convert to base64 efficiently using chunked processing
       const arrayBuffer = await resumeData.arrayBuffer();
@@ -137,10 +164,7 @@ serve(async (req) => {
         throw new Error('OCR extraction returned insufficient text. Document may be unreadable.');
       }
       
-      console.log(`AI vision extracted ${resumeText.length} characters from ${isPdfFile ? 'PDF' : 'image'}`);
-    } else {
-      // Unsupported file type - throw error
-      throw new Error(`Unsupported file type: ${mimeType}. Please upload PDF, image, or text files only.`);
+      console.log(`AI vision extracted ${resumeText.length} characters from document`);
     }
 
     // Final validation
