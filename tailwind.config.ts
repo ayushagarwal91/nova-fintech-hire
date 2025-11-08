@@ -13,6 +13,14 @@ export default {
       },
     },
     extend: {
+      backgroundImage: {
+        'gradient-primary': 'var(--gradient-primary)',
+        'gradient-accent': 'var(--gradient-accent)',
+      },
+      boxShadow: {
+        'card': 'var(--shadow-card)',
+        'elevated': 'var(--shadow-elevated)',
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
