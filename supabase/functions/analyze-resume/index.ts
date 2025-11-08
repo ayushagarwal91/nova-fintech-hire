@@ -25,6 +25,7 @@ serve(async (req) => {
       .from('candidates')
       .select(`
         name, 
+        email,
         role, 
         experience,
         job_id,
@@ -451,6 +452,8 @@ ${analysis.recommendation || (finalScore >= 7 ? 'Recommended for shortlisting ba
 
     // If shortlisted, generate assignment
     if (finalScore >= 7) {
+      console.log('Candidate shortlisted! Generating assignment and preparing email...');
+      
       // Determine difficulty level based on experience
       let difficultyLevel = 'Junior';
       let timeLimitHours = 48;
@@ -760,7 +763,7 @@ Generate the complete assignment following the OUTPUT FORMAT template specified 
         const assignmentData = await assignmentResponse.json();
         const assignmentText = assignmentData.choices[0].message.content;
 
-        const { error: assignmentError } = await supabase
+        const { data: insertedAssignment, error: assignmentError } = await supabase
           .from('assignments')
           .insert({
             candidate_id: candidateId,
@@ -770,14 +773,125 @@ Generate the complete assignment following the OUTPUT FORMAT template specified 
             deadline: deadline.toISOString(),
             status: 'pending',
             anti_cheat_id: antiCheatId,
-          });
+          })
+          .select()
+          .single();
         
-        if (assignmentError) {
+        if (assignmentError || !insertedAssignment) {
           console.error('Failed to create assignment:', assignmentError);
-          throw new Error(`Assignment creation failed: ${assignmentError.message}`);
+          throw new Error(`Assignment creation failed: ${assignmentError?.message}`);
         }
         
         console.log(`Assignment generated for candidate ${candidateId}: ${difficultyLevel} level, ${timeLimitHours}h deadline`);
+        
+        // Generate assessment link
+        const baseUrl = Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovable.app') || 'https://app.lovable.app';
+        const assessmentLink = `${baseUrl}/assignment/${insertedAssignment.id}?token=${antiCheatId}`;
+        
+        // Construct email content
+        const emailSubject = `🎉 Congratulations! You've Been Shortlisted - Assessment Inside`;
+        const emailBody = `
+Dear ${candidate.name},
+
+Congratulations! 🎊 We're thrilled to inform you that after carefully reviewing your application for the ${job.title} position, you've been shortlisted to move forward in our hiring process.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 YOUR RESUME SCORE: ${finalScore}/10
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Your profile stood out based on your strong technical skills and relevant experience. Here's what impressed us:
+
+${analysis.strengths?.slice(0, 3).map((s: string) => `  ✓ ${s}`).join('\n') || '  ✓ Strong technical background\n  ✓ Relevant experience\n  ✓ Good skill match'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 NEXT STEP: TECHNICAL ASSESSMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+To help us understand your problem-solving abilities and technical expertise better, we've prepared a unique coding assessment tailored to your experience level.
+
+🔗 ACCESS YOUR ASSESSMENT HERE:
+${assessmentLink}
+
+⏰ TIME LIMIT: ${timeLimitHours} hours from when you start
+📋 DIFFICULTY LEVEL: ${difficultyLevel}
+🎓 WHAT WE'RE TESTING: Real-world fintech problem-solving
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📌 IMPORTANT GUIDELINES:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Submit as a GitHub repository (public or private with our access)
+✅ Include a detailed README with setup instructions
+✅ Write clean, production-ready code
+✅ Answer the reasoning questions in your README
+✅ Complete independently to showcase your true abilities
+
+🚫 Please avoid:
+   • Copying boilerplate code without understanding
+   • Using AI tools to generate code you don't comprehend
+   • Submitting incomplete or rushed solutions
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 PRO TIPS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+• Take your time to understand the problem thoroughly
+• Focus on clean, maintainable code over fancy features
+• Test your solution with different scenarios
+• Document your design decisions
+• Show your understanding of the fintech domain
+• Make gradual Git commits (shows your development process)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+We're excited to see your solution and how you approach real-world technical challenges!
+
+If you have any questions about the assignment, please don't hesitate to reach out.
+
+Best of luck! 🚀
+
+Warm regards,
+The Recruitment Team
+
+---
+This is an automated message. Your unique assessment link is valid for one use only.
+        `.trim();
+        
+        // Log email details (actual sending requires Resend API key)
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('📧 EMAIL TO BE SENT (Add RESEND_API_KEY to actually send)');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('To:', candidate.email);
+        console.log('Name:', candidate.name);
+        console.log('Subject:', emailSubject);
+        console.log('Assessment Link:', assessmentLink);
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('Full Email Body:');
+        console.log(emailBody);
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        
+        // TODO: Uncomment below to send actual emails via Resend
+        // Requires adding RESEND_API_KEY secret
+        /*
+        try {
+          const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
+          const { data: emailData, error: emailError } = await resend.emails.send({
+            from: 'Recruitment Team <onboarding@resend.dev>',
+            to: [candidate.email],
+            subject: emailSubject,
+            text: emailBody,
+          });
+          
+          if (emailError) {
+            console.error('Failed to send email:', emailError);
+          } else {
+            console.log('Email sent successfully:', emailData);
+          }
+        } catch (emailErr) {
+          console.error('Email sending error:', emailErr);
+        }
+        */
+        
       } else {
         const errorText = await assignmentResponse.text();
         console.error('AI assignment generation failed:', errorText);
