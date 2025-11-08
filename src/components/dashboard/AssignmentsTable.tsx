@@ -119,7 +119,9 @@ export const AssignmentsTable = ({ assignments, isLoading }: AssignmentsTablePro
       </TableHeader>
       <TableBody>
         {assignments.map((assignment) => {
-          const timeRemaining = getTimeRemaining(assignment.deadline);
+          const timeRemaining = assignment.deadline 
+            ? getTimeRemaining(assignment.deadline)
+            : { text: 'No deadline', color: 'text-muted-foreground', isExpired: false };
           const candidate = assignment.candidates;
           
           return (
@@ -132,16 +134,22 @@ export const AssignmentsTable = ({ assignments, isLoading }: AssignmentsTablePro
               </TableCell>
               <TableCell>{candidate?.role}</TableCell>
               <TableCell>
-                <Badge className={getDifficultyColor(assignment.difficulty_level)}>
-                  {assignment.difficulty_level}
-                </Badge>
+                {assignment.difficulty_level ? (
+                  <Badge className={getDifficultyColor(assignment.difficulty_level)}>
+                    {assignment.difficulty_level}
+                  </Badge>
+                ) : (
+                  <span className="text-muted-foreground text-sm">Not set</span>
+                )}
               </TableCell>
               <TableCell>
-                {assignment.status === 'pending' ? (
+                {assignment.status === 'pending' && assignment.deadline ? (
                   <div className={`flex items-center gap-2 ${timeRemaining.color}`}>
                     <Clock className="h-4 w-4" />
                     <span className="font-medium">{timeRemaining.text}</span>
                   </div>
+                ) : assignment.status === 'pending' ? (
+                  <span className="text-muted-foreground text-sm">No deadline set</span>
                 ) : (
                   <span className="text-muted-foreground text-sm">
                     Submitted {formatDistanceToNow(new Date(assignment.updated_at))} ago

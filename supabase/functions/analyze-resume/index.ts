@@ -593,7 +593,7 @@ Generate the complete assignment following the OUTPUT FORMAT specified in the sy
         const assignmentData = await assignmentResponse.json();
         const assignmentText = assignmentData.choices[0].message.content;
 
-        await supabase
+        const { error: assignmentError } = await supabase
           .from('assignments')
           .insert({
             candidate_id: candidateId,
@@ -605,7 +605,16 @@ Generate the complete assignment following the OUTPUT FORMAT specified in the sy
             anti_cheat_id: antiCheatId,
           });
         
+        if (assignmentError) {
+          console.error('Failed to create assignment:', assignmentError);
+          throw new Error(`Assignment creation failed: ${assignmentError.message}`);
+        }
+        
         console.log(`Assignment generated for candidate ${candidateId}: ${difficultyLevel} level, ${timeLimitHours}h deadline`);
+      } else {
+        const errorText = await assignmentResponse.text();
+        console.error('AI assignment generation failed:', errorText);
+        throw new Error(`Assignment generation failed: ${assignmentResponse.statusText}`);
       }
     }
 
