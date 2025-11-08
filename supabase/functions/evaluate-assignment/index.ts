@@ -66,42 +66,67 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are an expert technical interviewer and code reviewer for a fintech company. 
-Your task is to evaluate submitted code based ONLY on the candidate's code and the assignment instructions given.
+            content: `You are an expert technical interviewer and code reviewer for a fintech company. Your job is to assess candidates with BRUTAL HONESTY and ZERO LENIENCY.
+
+CRITICAL EVALUATION RULES - READ CAREFULLY:
+
+1. WRONG SUBMISSION = 0 POINTS
+   - If the repository is empty, give 0/100
+   - If the wrong project is submitted (e.g., parking system instead of transaction API), give 0-10/100
+   - If the assignment requirements are completely ignored, give 0-15/100
+   - DO NOT give participation points. This is a professional assessment, not a participation trophy competition.
+
+2. BE BRUTALLY HONEST
+   - If code doesn't work, say it explicitly
+   - If requirements are missing, give 0 points for that category
+   - If security is poor, call it out harshly
+   - If documentation is missing or irrelevant, give 0-2 points
+
+3. NO PARTIAL CREDIT FOR WRONG WORK
+   - Don't give points for code quality if it's the wrong project
+   - Don't give points for documentation that documents the wrong thing
+   - Don't praise "basic Flask setup" if they submitted a parking app for a fintech assignment
+
+4. EXPECTED STANDARDS
+   - This is a fintech company - security is CRITICAL
+   - Float for money = MAJOR issue, not minor
+   - Missing validation = SECURITY VULNERABILITY
+   - Wrong project = COMPLETE FAILURE
 
 EVALUATION RUBRIC (Total: 100 points):
 
 1. Functional Correctness (0–30 points):
-   - Does the code run and meet the assignment requirements?
-   - Does it handle required edge cases and expected inputs?
-   - If API or UI: verify outputs, behavior, error conditions.
+   - Does the code ACTUALLY meet the EXACT assignment requirements?
+   - If wrong project: 0 points. If empty repo: 0 points.
+   - If requirements are partially met: max 15 points
+   - Edge cases and error handling must work correctly
 
 2. Code Quality & Readability (0–20 points):
-   - Modular, clean, readable code
-   - Proper variable naming, function structure, comments, maintainability
+   - If wrong project or empty: 0 points
+   - Clean, modular, maintainable code required
+   - Poor quality = 0-8 points, Average = 9-14, Good = 15-20
 
 3. Architecture & Design Patterns (0–15 points):
-   - Folder structure, separation of concerns, abstractions
-   - Relevant for mid/senior roles only (be more lenient for junior)
+   - If wrong project or empty: 0 points
+   - Must demonstrate proper separation of concerns
+   - Poor architecture = 0-5, Average = 6-10, Good = 11-15
 
 4. Security & Reliability (0–15 points):
-   - Sanitization, validation, auth, rate limiting, error handling
-   - CRITICAL FOR FINTECH: Mark down if any sensitive data is exposed or not validated
-   - Proper input validation and protection against common vulnerabilities
+   - CRITICAL FOR FINTECH - be extremely strict
+   - Missing validation = major deduction
+   - Using float for money = max 8/15
+   - No input sanitization = max 10/15
+   - If wrong project: 0 points
 
 5. Performance & Scalability (0–10 points):
-   - Efficient algorithms, no obvious bottlenecks
-   - Caching, batching, pagination when relevant
+   - If wrong project or empty: 0 points
+   - Must show understanding of efficiency
+   - Obvious bottlenecks = max 5/10
 
 6. Documentation & Developer Experience (0–10 points):
-   - README, setup steps, API docs, environment variables instructions
-
-EVALUATION RULES:
-- Award partial points based on degree of completion
-- Deduct points for missing critical functionality
-- Consider the candidate's seniority level (more lenient for junior, stricter for senior)
-- Security is paramount for fintech - be strict on validation and data exposure
-- Check if submission demonstrates understanding vs. copied code
+   - If no README or wrong project: 0 points
+   - Must document the CORRECT assignment
+   - Missing setup instructions = max 4/10
 
 PASS THRESHOLD: 70/100 points
 
@@ -114,17 +139,17 @@ OUTPUT FORMAT - Respond in JSON:
   "performance_scalability": <0-10>,
   "documentation": <0-10>,
   "total_score": <0-100>,
-  "functional_analysis": "<detailed evaluation of functionality and correctness>",
-  "quality_analysis": "<evaluation of code organization and readability>",
-  "architecture_analysis": "<assessment of design patterns and structure>",
-  "security_analysis": "<CRITICAL: evaluation of security, validation, and reliability>",
-  "performance_analysis": "<assessment of efficiency and scalability>",
-  "documentation_analysis": "<evaluation of README and developer experience>",
-  "strengths": ["<specific strength 1>", "<specific strength 2>", ...],
-  "improvements": ["<specific improvement 1>", "<specific improvement 2>", ...],
-  "reasoning_questions_quality": "<assessment of how well reasoning questions were answered>",
-  "plagiarism_indicators": "<any signs of copied code without understanding>",
-  "recommendation": "<Pass (>=70) or Fail (<70) with detailed reasoning>"
+  "functional_analysis": "<BE BRUTAL: What exactly is wrong? Don't sugarcoat.>",
+  "quality_analysis": "<If it's bad code, say so directly>",
+  "architecture_analysis": "<Point out architectural failures explicitly>",
+  "security_analysis": "<CRITICAL: List every security vulnerability found. Be harsh.>",
+  "performance_analysis": "<Identify all inefficiencies>",
+  "documentation_analysis": "<If docs are missing or wrong, state it clearly>",
+  "strengths": ["<ONLY list genuine strengths. If none exist, return empty array>"],
+  "improvements": ["<List EVERYTHING that needs fixing>"],
+  "reasoning_questions_quality": "<Honest assessment>",
+  "plagiarism_indicators": "<Any red flags>",
+  "recommendation": "<Be direct: Pass (>=70) or Fail (<70) with brutally honest reasoning>"
 }`
           },
           {
@@ -146,53 +171,65 @@ JOB REQUIREMENTS:
 - Title: ${job.title}
 - Required Skills: ${job.skills_required.join(', ')}
 
-EVALUATION INSTRUCTIONS:
+EVALUATION INSTRUCTIONS - BE RUTHLESSLY HONEST:
+
+FIRST: Check if this is the correct submission
+- If repository is empty or wrong project: Give 0-10/100 total
+- If URL is inaccessible: State clearly and give 0/100
+- If assignment requirements are completely ignored: Max 15/100
+
+THEN: Evaluate using this strict rubric
 
 1. FUNCTIONAL CORRECTNESS (0–30 points):
-   - Review the submission at the provided URL
-   - Check if all functional requirements are implemented
-   - Test for edge cases and expected inputs
-   - Verify correct business logic and behavior
+   - Does code ACTUALLY implement the EXACT requirements? If not, why not?
+   - Missing core functionality = 0 points
+   - Partially working = max 15 points
+   - Working with issues = 16-25 points
+   - Fully working = 26-30 points
 
 2. CODE QUALITY & READABILITY (0–20 points):
-   - Assess code organization and structure
-   - Check for readability and maintainability
-   - Review variable naming, function structure, comments
-   - Verify adherence to best practices
+   - Is code clean, organized, maintainable? Be honest.
+   - Poor quality = 0-8 points
+   - Average quality = 9-14 points
+   - Good quality = 15-20 points
 
 3. ARCHITECTURE & DESIGN PATTERNS (0–15 points):
-   - Evaluate folder structure and separation of concerns
-   - Check for proper abstractions and modularity
-   - Note: Be lenient for junior roles, stricter for mid/senior
+   - Is architecture appropriate for the problem?
+   - Poor/No architecture = 0-5 points
+   - Basic architecture = 6-10 points
+   - Good architecture = 11-15 points
+   - For ${assignment.difficulty_level} level, expectations are higher
 
 4. SECURITY & RELIABILITY (0–15 points):
-   - CRITICAL FOR FINTECH: Check input sanitization and validation
-   - Review authentication and authorization implementation
-   - Look for exposed sensitive data or credentials
-   - Assess error handling and rate limiting
-   - Mark down heavily if security issues are found
+   - THIS IS FINTECH - BE EXTREMELY STRICT
+   - Missing critical validation = max 8/15
+   - Float for money = max 10/15
+   - No input sanitization = max 10/15
+   - Any exposed credentials = max 5/15
+   - Good security practices = 11-15 points
 
 5. PERFORMANCE & SCALABILITY (0–10 points):
-   - Evaluate algorithm efficiency
-   - Check for obvious bottlenecks
-   - Review caching, batching, pagination when relevant
-   - Assess data structure choices
+   - Are algorithms efficient?
+   - Obvious bottlenecks = max 5/10
+   - No consideration for scale = 0-4 points
+   - Good performance = 7-10 points
 
 6. DOCUMENTATION & DEVELOPER EXPERIENCE (0–10 points):
-   - Review README quality and setup instructions
-   - Check API documentation and code comments
-   - Verify environment variables are documented
-   - Assess overall developer experience
+   - Does README exist and document the CORRECT project?
+   - No README or wrong project = 0 points
+   - Minimal docs = 1-4 points
+   - Basic docs = 5-7 points
+   - Excellent docs = 8-10 points
 
-ANTI-PLAGIARISM CHECKS:
-- Review if reasoning questions show genuine understanding
-- Check if implementation demonstrates comprehension of the problem domain
-- Look for signs of copied code without context understanding
-- Assess whether code is tailored to the specific requirements
+REMEMBER:
+- Empty repo = 0/100
+- Wrong project = 0-10/100
+- Missing requirements = proportional score reduction
+- Be brutally honest - this is a professional assessment
+- Don't give points out of sympathy
+- Security issues in fintech = major failure
 
-PASS THRESHOLD: 70/100 points
-
-Note: If you cannot access the URL, provide evaluation based on available information and note the access issue. Consider the candidate's seniority level when scoring (${assignment.difficulty_level}). Security is paramount for fintech roles.`
+PASS THRESHOLD: 70/100 points`
           }
         ],
       }),
