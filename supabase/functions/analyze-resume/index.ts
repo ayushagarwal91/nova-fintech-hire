@@ -54,8 +54,59 @@ serve(async (req) => {
       throw new Error('Failed to download resume');
     }
 
-    // Convert PDF to text (simplified - in production use a proper PDF parser)
-    const resumeText = await resumeData.text();
+    // Convert resume to base64 for OCR processing
+    const arrayBuffer = await resumeData.arrayBuffer();
+    const base64Resume = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    const mimeType = resumeData.type || 'application/pdf';
+    
+    console.log('Extracting text from resume using OCR...');
+    
+    // Use Lovable AI with vision to extract text from resume (handles scanned PDFs and images)
+    const ocrResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${lovableApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: 'Extract all text content from this resume/CV document. Include all sections: personal information, work experience, education, skills, certifications, etc. Provide the extracted text in a clear, structured format.'
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: `data:${mimeType};base64,${base64Resume}`
+                }
+              }
+            ]
+          }
+        ],
+      }),
+    });
+
+    if (!ocrResponse.ok) {
+      console.error('OCR extraction failed, attempting fallback text extraction');
+      // Fallback to simple text extraction
+      const resumeText = await resumeData.text();
+      if (!resumeText || resumeText.trim().length < 50) {
+        throw new Error('Unable to extract text from resume. Please ensure the file is readable.');
+      }
+    }
+
+    let resumeText = '';
+    if (ocrResponse.ok) {
+      const ocrData = await ocrResponse.json();
+      resumeText = ocrData.choices[0].message.content;
+      console.log('Text successfully extracted from resume');
+    } else {
+      resumeText = await resumeData.text();
+    }
 
     // Call Lovable AI to analyze resume with specific scoring criteria
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
