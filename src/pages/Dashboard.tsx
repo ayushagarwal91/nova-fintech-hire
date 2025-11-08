@@ -7,11 +7,13 @@ import { StatsCards } from "@/components/dashboard/StatsCards";
 import { CandidateFilters } from "@/components/dashboard/CandidateFilters";
 import { CandidatesTable } from "@/components/dashboard/CandidatesTable";
 import { useCandidates } from "@/hooks/useCandidates";
+import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { Candidate } from "@/types";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { candidates, stats, isLoading } = useCandidates();
+  const { candidates, isLoading } = useCandidates();
+  const { stats, isLoading: statsLoading } = useDashboardStats();
   
   const [filteredCandidates, setFilteredCandidates] = useState<Candidate[]>([]);
   const [roleFilter, setRoleFilter] = useState<string>("all");

@@ -45,6 +45,15 @@ export interface CandidateStats {
   avgScore: number;
 }
 
+export interface DashboardStats extends CandidateStats {
+  openPositions: number;
+  activeJobPostings: number;
+  interviewsToday: number;
+  interviewsThisWeek: number;
+  avgTimeToHire: number;
+  conversionRate: number;
+}
+
 export interface ApplicationFormData {
   name: string;
   email: string;
