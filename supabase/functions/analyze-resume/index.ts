@@ -76,39 +76,26 @@ serve(async (req) => {
       console.log('Extracting text from plain text file...');
       resumeText = await resumeData.text();
     }
-    // For PDF files, try text extraction first
-    else if (isPdfFile) {
-      console.log('Attempting to extract text from PDF...');
-      try {
-        resumeText = await resumeData.text();
-        console.log(`Extracted ${resumeText.length} characters from PDF`);
-        
-        // If PDF has minimal text, it's likely scanned - use OCR
-        if (resumeText.trim().length < 100) {
-          console.log('PDF appears to be scanned, switching to OCR...');
-          resumeText = '';
-        }
-      } catch (error) {
-        console.log('PDF text extraction failed, will use OCR:', error);
-      }
-    }
-    
-    // If we don't have text yet, use OCR (for images, scanned PDFs, or other formats)
-    if (!resumeText || resumeText.trim().length < 100) {
-      console.log('Using AI vision to extract text from document...');
+    // For PDF and image files, go OCR-FIRST (most reliable for resumes)
+    else if (isPdfFile || isImageFile) {
+      console.log(`Processing ${isPdfFile ? 'PDF' : 'image'} with OCR-first approach...`);
       
-      // Convert to base64 for vision model
+      // Convert to base64 efficiently using chunked processing
       const arrayBuffer = await resumeData.arrayBuffer();
       const uint8Array = new Uint8Array(arrayBuffer);
       
-      // Convert to binary string in chunks to avoid stack overflow
-      let binaryString = '';
-      for (let i = 0; i < uint8Array.length; i++) {
-        binaryString += String.fromCharCode(uint8Array[i]);
-      }
-      const base64Resume = btoa(binaryString);
+      // Efficient base64 conversion in chunks to prevent memory issues
+      const chunkSize = 8192;
+      const chunks: string[] = [];
       
-      // Use Lovable AI with vision capabilities
+      for (let i = 0; i < uint8Array.length; i += chunkSize) {
+        const chunk = uint8Array.subarray(i, Math.min(i + chunkSize, uint8Array.length));
+        chunks.push(String.fromCharCode(...chunk));
+      }
+      
+      const base64Resume = btoa(chunks.join(''));
+      
+      // Use Lovable AI with vision capabilities for OCR
       const ocrResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -144,8 +131,16 @@ serve(async (req) => {
       }
 
       const ocrData = await ocrResponse.json();
-      resumeText = ocrData.choices[0].message.content;
-      console.log(`AI vision extracted ${resumeText.length} characters from document`);
+      resumeText = ocrData.choices?.[0]?.message?.content || '';
+      
+      if (!resumeText || resumeText.trim().length < 50) {
+        throw new Error('OCR extraction returned insufficient text. Document may be unreadable.');
+      }
+      
+      console.log(`AI vision extracted ${resumeText.length} characters from ${isPdfFile ? 'PDF' : 'image'}`);
+    } else {
+      // Unsupported file type - throw error
+      throw new Error(`Unsupported file type: ${mimeType}. Please upload PDF, image, or text files only.`);
     }
 
     // Final validation
@@ -323,36 +318,61 @@ Be harsh and strict. Award points only for explicit evidence.`
     const aiData = await aiResponse.json();
     const aiMessage = aiData.choices[0].message.content;
     
-    // Parse AI response
+    // Parse AI response with robust error handling
     let analysis;
     try {
-      // Try to parse JSON from the response (handle both plain JSON and markdown-wrapped JSON)
-      const jsonMatch = aiMessage.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        analysis = JSON.parse(jsonMatch[0]);
-      } else {
-        // Fallback if JSON parsing fails
-        analysis = {
-          total_score: 7,
-          skills_score: 3.5,
-          experience_score: 2.1,
-          overall_fit_score: 1.4,
-          recommendation: aiMessage
-        };
+      // Remove markdown code blocks if present
+      let cleanedMessage = aiMessage.trim();
+      if (cleanedMessage.startsWith('```json')) {
+        cleanedMessage = cleanedMessage.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (cleanedMessage.startsWith('```')) {
+        cleanedMessage = cleanedMessage.replace(/^```\s*/, '').replace(/\s*```$/, '');
       }
+      
+      // Extract JSON object using regex as fallback
+      const jsonMatch = cleanedMessage.match(/\{[\s\S]*\}/);
+      const jsonString = jsonMatch ? jsonMatch[0] : cleanedMessage;
+      
+      analysis = JSON.parse(jsonString);
+      
+      // Validate required fields
+      if (typeof analysis.total_score !== 'number' || 
+          typeof analysis.skills_score !== 'number' ||
+          typeof analysis.experience_score !== 'number' ||
+          typeof analysis.overall_fit_score !== 'number') {
+        throw new Error('Missing required score fields in AI response');
+      }
+      
+      // Clamp scores to valid ranges
+      analysis.total_score = Math.max(0, Math.min(10, analysis.total_score));
+      analysis.skills_score = Math.max(0, Math.min(5, analysis.skills_score));
+      analysis.experience_score = Math.max(0, Math.min(3, analysis.experience_score));
+      analysis.overall_fit_score = Math.max(0, Math.min(2, analysis.overall_fit_score));
+      
+      console.log('Successfully parsed AI analysis:', JSON.stringify(analysis, null, 2));
+      
     } catch (parseError) {
       console.error('Failed to parse AI response:', parseError);
+      console.error('Raw AI message:', aiMessage);
+      
+      // Safe fallback with logged error
       analysis = {
-        total_score: 7,
-        skills_score: 3.5,
-        experience_score: 2.1,
-        overall_fit_score: 1.4,
-        recommendation: aiMessage
+        total_score: 0,
+        skills_score: 0,
+        experience_score: 0,
+        overall_fit_score: 0,
+        skills_analysis: 'Error parsing AI response',
+        experience_analysis: 'Error parsing AI response',
+        fit_analysis: 'Error parsing AI response',
+        strengths: [],
+        concerns: ['AI response parsing failed - manual review required'],
+        recommendation: 'Unable to complete automated analysis. Please review manually.',
+        raw_response: aiMessage.substring(0, 500) // Include truncated raw response for debugging
       };
     }
 
-    // Ensure we have a total_score
-    const finalScore = Math.round(analysis.total_score || 0);
+    // Ensure we have a valid total_score
+    const finalScore = Math.max(0, Math.min(10, Math.round(analysis.total_score || 0)));
     
     // Format detailed feedback with strict format
     const detailedFeedback = `
