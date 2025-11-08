@@ -56,7 +56,16 @@ serve(async (req) => {
 
     // Convert resume to base64 for OCR processing
     const arrayBuffer = await resumeData.arrayBuffer();
-    const base64Resume = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    const uint8Array = new Uint8Array(arrayBuffer);
+    
+    // Process in chunks to avoid stack overflow
+    let binaryString = '';
+    const chunkSize = 8192;
+    for (let i = 0; i < uint8Array.length; i += chunkSize) {
+      const chunk = uint8Array.subarray(i, i + chunkSize);
+      binaryString += String.fromCharCode.apply(null, Array.from(chunk));
+    }
+    const base64Resume = btoa(binaryString);
     const mimeType = resumeData.type || 'application/pdf';
     
     console.log('Extracting text from resume using OCR...');
@@ -90,22 +99,25 @@ serve(async (req) => {
       }),
     });
 
-    if (!ocrResponse.ok) {
-      console.error('OCR extraction failed, attempting fallback text extraction');
-      // Fallback to simple text extraction
-      const resumeText = await resumeData.text();
-      if (!resumeText || resumeText.trim().length < 50) {
-        throw new Error('Unable to extract text from resume. Please ensure the file is readable.');
-      }
-    }
-
     let resumeText = '';
     if (ocrResponse.ok) {
       const ocrData = await ocrResponse.json();
       resumeText = ocrData.choices[0].message.content;
       console.log('Text successfully extracted from resume');
     } else {
-      resumeText = await resumeData.text();
+      console.error('OCR extraction failed, attempting fallback text extraction');
+      // Re-download for fallback since stream was already consumed
+      const { data: fallbackData, error: fallbackError } = await supabase.storage
+        .from('resumes')
+        .download(resumePath);
+      
+      if (!fallbackError && fallbackData) {
+        resumeText = await fallbackData.text();
+      }
+      
+      if (!resumeText || resumeText.trim().length < 50) {
+        throw new Error('Unable to extract text from resume. Please ensure the file is readable.');
+      }
     }
 
     // Call Lovable AI to analyze resume with specific scoring criteria
