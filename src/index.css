@@ -8,40 +8,40 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 220 60% 15%;
+    --background: 210 20% 98%;
+    --foreground: 216 28% 7%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 60% 15%;
+    --card-foreground: 216 28% 7%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 60% 15%;
+    --popover-foreground: 216 28% 7%;
 
-    --primary: 220 60% 25%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 216 28% 7%;
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 30% 96%;
-    --secondary-foreground: 220 60% 25%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 216 28% 7%;
 
-    --muted: 210 30% 96%;
-    --muted-foreground: 220 20% 50%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215 16% 47%;
 
-    --accent: 180 60% 50%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 177 70% 59%;
+    --accent-foreground: 216 28% 7%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 220 20% 90%;
-    --input: 220 20% 90%;
-    --ring: 180 60% 50%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 177 70% 59%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
     
-    --gradient-primary: linear-gradient(135deg, hsl(220, 60%, 25%) 0%, hsl(200, 60%, 35%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(180, 60%, 50%) 0%, hsl(200, 70%, 45%) 100%);
-    --shadow-card: 0 4px 12px -2px hsl(220 60% 25% / 0.08);
-    --shadow-elevated: 0 8px 24px -4px hsl(220 60% 25% / 0.12);
+    --gradient-primary: linear-gradient(135deg, hsl(216, 28%, 7%) 0%, hsl(216, 28%, 15%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(177, 70%, 59%) 0%, hsl(177, 60%, 50%) 100%);
+    --shadow-card: 0 2px 8px -2px hsl(216 28% 7% / 0.06);
+    --shadow-elevated: 0 4px 16px -4px hsl(216 28% 7% / 0.10);
 
     --sidebar-background: 0 0% 98%;
 
