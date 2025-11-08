@@ -54,70 +54,80 @@ serve(async (req) => {
       throw new Error('Failed to download resume');
     }
 
-    // Convert resume to base64 for OCR processing
-    const arrayBuffer = await resumeData.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
+    console.log('Attempting to extract text from resume...');
     
-    // Process in chunks to avoid stack overflow
-    let binaryString = '';
-    const chunkSize = 8192;
-    for (let i = 0; i < uint8Array.length; i += chunkSize) {
-      const chunk = uint8Array.subarray(i, i + chunkSize);
-      binaryString += String.fromCharCode.apply(null, Array.from(chunk));
-    }
-    const base64Resume = btoa(binaryString);
-    const mimeType = resumeData.type || 'application/pdf';
-    
-    console.log('Extracting text from resume using OCR...');
-    
-    // Use Lovable AI with vision to extract text from resume (handles scanned PDFs and images)
-    const ocrResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${lovableApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: 'Extract all text content from this resume/CV document. Include all sections: personal information, work experience, education, skills, certifications, etc. Provide the extracted text in a clear, structured format.'
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: `data:${mimeType};base64,${base64Resume}`
-                }
-              }
-            ]
-          }
-        ],
-      }),
-    });
-
+    // First, try simple text extraction (works for most PDFs with embedded text)
     let resumeText = '';
-    if (ocrResponse.ok) {
+    try {
+      resumeText = await resumeData.text();
+      console.log(`Extracted ${resumeText.length} characters from resume`);
+    } catch (error) {
+      console.log('Direct text extraction failed:', error);
+    }
+
+    // If text extraction failed or produced insufficient text, use OCR (for scanned PDFs/images)
+    if (!resumeText || resumeText.trim().length < 100) {
+      console.log('Using OCR for text extraction...');
+      
+      const fileSize = resumeData.size;
+      // Limit OCR to files under 5MB to prevent memory issues
+      if (fileSize > 5 * 1024 * 1024) {
+        throw new Error('Resume file is too large for OCR processing. Please ensure the PDF has embedded text or reduce file size.');
+      }
+
+      // Convert to base64 efficiently
+      const arrayBuffer = await resumeData.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
+      
+      // Use btoa with proper binary string conversion (more efficient for smaller files)
+      let binaryString = '';
+      for (let i = 0; i < uint8Array.length; i++) {
+        binaryString += String.fromCharCode(uint8Array[i]);
+      }
+      const base64Resume = btoa(binaryString);
+      const mimeType = resumeData.type || 'application/pdf';
+      
+      // Use Lovable AI with vision to extract text
+      const ocrResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${lovableApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: 'Extract all text content from this resume/CV document. Include all sections: personal information, work experience, education, skills, certifications, etc. Provide the extracted text in a clear, structured format.'
+                },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: `data:${mimeType};base64,${base64Resume}`
+                  }
+                }
+              ]
+            }
+          ],
+        }),
+      });
+
+      if (!ocrResponse.ok) {
+        throw new Error(`OCR extraction failed: ${ocrResponse.statusText}`);
+      }
+
       const ocrData = await ocrResponse.json();
       resumeText = ocrData.choices[0].message.content;
-      console.log('Text successfully extracted from resume');
-    } else {
-      console.error('OCR extraction failed, attempting fallback text extraction');
-      // Re-download for fallback since stream was already consumed
-      const { data: fallbackData, error: fallbackError } = await supabase.storage
-        .from('resumes')
-        .download(resumePath);
-      
-      if (!fallbackError && fallbackData) {
-        resumeText = await fallbackData.text();
-      }
-      
-      if (!resumeText || resumeText.trim().length < 50) {
-        throw new Error('Unable to extract text from resume. Please ensure the file is readable.');
-      }
+      console.log('OCR extraction successful');
+    }
+
+    // Final validation
+    if (!resumeText || resumeText.trim().length < 50) {
+      throw new Error('Unable to extract sufficient text from resume. Please ensure the file contains readable text.');
     }
 
     // Call Lovable AI to analyze resume with specific scoring criteria
