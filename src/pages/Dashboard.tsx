@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { BarChart3, Users, TrendingUp, Filter } from "lucide-react";
+import { BarChart3, Users, TrendingUp, Filter, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Candidate {
@@ -15,7 +17,12 @@ interface Candidate {
   role: string;
   status: string;
   resume_score: number;
+  resume_feedback?: string;
   created_at: string;
+  job_id?: string;
+  jobs?: {
+    title: string;
+  };
 }
 
 interface Stats {
@@ -25,6 +32,7 @@ interface Stats {
 }
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [filteredCandidates, setFilteredCandidates] = useState<Candidate[]>([]);
@@ -46,7 +54,12 @@ const Dashboard = () => {
     try {
       const { data, error } = await supabase
         .from('candidates')
-        .select('*')
+        .select(`
+          *,
+          jobs (
+            title
+          )
+        `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -119,6 +132,14 @@ const Dashboard = () => {
       </div>
 
       <div className="container mx-auto px-4 py-8">
+        {/* Post Job Button */}
+        <div className="flex justify-end mb-6">
+          <Button onClick={() => navigate('/post-job')} className="bg-gradient-accent text-accent-foreground hover:opacity-90">
+            <Plus className="mr-2 h-4 w-4" />
+            Post New Job
+          </Button>
+        </div>
+
         {/* Stats Cards */}
         <div className="grid gap-6 md:grid-cols-3 mb-8">
           <Card className="p-6 shadow-card">
@@ -217,35 +238,48 @@ const Dashboard = () => {
                     <TableRow>
                       <TableHead>Name</TableHead>
                       <TableHead>Email</TableHead>
+                      <TableHead>Job Applied</TableHead>
                       <TableHead>Role</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Resume Score</TableHead>
+                      <TableHead>Feedback</TableHead>
                       <TableHead>Applied</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredCandidates.map((candidate) => (
-                      <TableRow key={candidate.id}>
-                        <TableCell className="font-medium">{candidate.name}</TableCell>
-                        <TableCell>{candidate.email}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{candidate.role}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={getStatusColor(candidate.status)}>
-                            {candidate.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <span className={`font-semibold ${getScoreColor(candidate.resume_score)}`}>
-                            {candidate.resume_score}/10
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {new Date(candidate.created_at).toLocaleDateString()}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {filteredCandidates.map((candidate) => {
+                      const job = candidate.jobs as any;
+                      return (
+                        <TableRow key={candidate.id}>
+                          <TableCell className="font-medium">{candidate.name}</TableCell>
+                          <TableCell>{candidate.email}</TableCell>
+                          <TableCell>
+                            {job?.title || 'N/A'}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{candidate.role}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={getStatusColor(candidate.status)}>
+                              {candidate.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <span className={`font-semibold ${getScoreColor(candidate.resume_score)}`}>
+                              {candidate.resume_score || '-'}/10
+                            </span>
+                          </TableCell>
+                          <TableCell className="max-w-xs">
+                            <p className="truncate text-sm text-muted-foreground">
+                              {candidate.resume_feedback || 'Pending analysis'}
+                            </p>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {new Date(candidate.created_at).toLocaleDateString()}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>

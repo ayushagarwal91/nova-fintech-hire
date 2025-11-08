@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Briefcase, Brain, CheckCircle, TrendingUp, Zap } from "lucide-react";
+import { Briefcase, Brain, CheckCircle, TrendingUp, Zap, Plus } from "lucide-react";
 
 const Index = () => {
   return (
@@ -26,7 +26,18 @@ const Index = () => {
                 size="lg"
                 className="h-14 px-8 text-lg bg-accent hover:bg-accent/90 text-accent-foreground"
               >
-                <Link to="/apply">Apply Now</Link>
+                <Link to="/apply">Apply for Jobs</Link>
+              </Button>
+              <Button 
+                asChild 
+                size="lg"
+                variant="outline"
+                className="h-14 px-8 text-lg border-2 border-white text-white hover:bg-white hover:text-primary"
+              >
+                <Link to="/post-job">
+                  <Plus className="mr-2 h-5 w-5" />
+                  Post a Job
+                </Link>
               </Button>
               <Button 
                 asChild 

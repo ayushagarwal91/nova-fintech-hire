@@ -20,16 +20,30 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get candidate details
+    // Get candidate details with job information
     const { data: candidate, error: fetchError } = await supabase
       .from('candidates')
-      .select('name, role, experience')
+      .select(`
+        name, 
+        role, 
+        experience,
+        job_id,
+        jobs (
+          title,
+          description,
+          requirements,
+          skills_required,
+          experience_required
+        )
+      `)
       .eq('id', candidateId)
       .single();
 
     if (fetchError || !candidate) {
       throw new Error('Candidate not found');
     }
+
+    const job = candidate.jobs as any;
 
     // Download resume from storage
     const { data: resumeData, error: downloadError } = await supabase.storage
@@ -56,21 +70,37 @@ serve(async (req) => {
           {
             role: 'system',
             content: `You are an expert technical recruiter specializing in fintech roles. 
-            Analyze resumes and provide a job-fit score from 0-10 based on:
-            - Relevant technical skills for the role
-            - Fintech industry experience
-            - Years of experience match
-            - Overall suitability
+            Analyze resumes and provide a job-fit score from 0-10 by comparing the candidate against the specific job requirements.
             
-            Respond in JSON format: {"score": <number>, "feedback": "<detailed feedback>"}`
+            Evaluate based on:
+            - Match with required skills and technologies
+            - Relevant industry experience (especially fintech)
+            - Years of experience vs job requirements
+            - Alignment with job description and responsibilities
+            - Overall suitability for the specific role
+            
+            Respond in JSON format: {"score": <number>, "feedback": "<detailed feedback on how they match the job requirements>"}`
           },
           {
             role: 'user',
-            content: `Analyze this resume for a ${candidate.role} position with ${candidate.experience} years experience requirement:
+            content: `Analyze this resume for the following position:
             
+            Job Title: ${job.title}
+            Role: ${candidate.role}
+            
+            Job Description:
+            ${job.description}
+            
+            Requirements:
+            ${job.requirements}
+            
+            Required Skills: ${job.skills_required.join(', ')}
+            Required Experience: ${job.experience_required} years
+            
+            Candidate's Resume:
             ${resumeText}
             
-            Provide a score (0-10) and detailed feedback on their fintech skills and job fit.`
+            Provide a detailed score (0-10) and feedback on how well this candidate matches the specific job requirements. Be specific about skills matches and gaps.`
           }
         ],
       }),
