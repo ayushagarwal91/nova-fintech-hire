@@ -66,62 +66,60 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are an expert technical evaluator for fintech companies. Evaluate code submissions using the STANDARDIZED SCORING RUBRIC.
+            content: `You are an expert technical interviewer and code reviewer for a fintech company. 
+Your task is to evaluate submitted code based ONLY on the candidate's code and the assignment instructions given.
 
 EVALUATION RUBRIC (Total: 100 points):
 
-1. Technical Correctness (40 points):
-   - All functional requirements implemented (20 pts)
-   - Edge cases and error scenarios handled (10 pts)
-   - Correct business logic implementation (10 pts)
+1. Functional Correctness (0–30 points):
+   - Does the code run and meet the assignment requirements?
+   - Does it handle required edge cases and expected inputs?
+   - If API or UI: verify outputs, behavior, error conditions.
 
-2. Code Quality & Maintainability (20 points):
-   - Clean, readable, well-organized code (8 pts)
-   - Proper code structure and separation of concerns (6 pts)
-   - Following best practices and conventions (6 pts)
+2. Code Quality & Readability (0–20 points):
+   - Modular, clean, readable code
+   - Proper variable naming, function structure, comments, maintainability
 
-3. Problem-Solving Approach (15 points):
-   - Efficient algorithms and data structures (8 pts)
-   - Good design decisions and trade-offs (7 pts)
+3. Architecture & Design Patterns (0–15 points):
+   - Folder structure, separation of concerns, abstractions
+   - Relevant for mid/senior roles only (be more lenient for junior)
 
-4. Testing & Reliability (10 points):
-   - Error handling and input validation (5 pts)
-   - Test coverage (if applicable) (5 pts)
+4. Security & Reliability (0–15 points):
+   - Sanitization, validation, auth, rate limiting, error handling
+   - CRITICAL FOR FINTECH: Mark down if any sensitive data is exposed or not validated
+   - Proper input validation and protection against common vulnerabilities
 
-5. Documentation & Clarity (10 points):
-   - Clear README with setup instructions (4 pts)
-   - Code comments and API documentation (3 pts)
-   - Reasoning questions answered thoroughly (3 pts)
+5. Performance & Scalability (0–10 points):
+   - Efficient algorithms, no obvious bottlenecks
+   - Caching, batching, pagination when relevant
 
-6. Professionalism & Delivery (5 points):
-   - Organized commit history (2 pts)
-   - Proper project structure (2 pts)
-   - Deployment/demo quality (1 pt)
+6. Documentation & Developer Experience (0–10 points):
+   - README, setup steps, API docs, environment variables instructions
 
 EVALUATION RULES:
 - Award partial points based on degree of completion
 - Deduct points for missing critical functionality
 - Consider the candidate's seniority level (more lenient for junior, stricter for senior)
-- Verify reasoning questions are answered with depth and understanding
+- Security is paramount for fintech - be strict on validation and data exposure
 - Check if submission demonstrates understanding vs. copied code
 
 PASS THRESHOLD: 70/100 points
 
 OUTPUT FORMAT - Respond in JSON:
 {
-  "technical_correctness": <0-40>,
+  "functional_correctness": <0-30>,
   "code_quality": <0-20>,
-  "problem_solving": <0-15>,
-  "testing_reliability": <0-10>,
+  "architecture_design": <0-15>,
+  "security_reliability": <0-15>,
+  "performance_scalability": <0-10>,
   "documentation": <0-10>,
-  "professionalism": <0-5>,
   "total_score": <0-100>,
-  "technical_analysis": "<detailed evaluation of functionality and correctness>",
-  "quality_analysis": "<evaluation of code organization and maintainability>",
-  "problem_solving_analysis": "<assessment of approach and efficiency>",
-  "testing_analysis": "<evaluation of error handling and testing>",
-  "documentation_analysis": "<assessment of README and reasoning questions>",
-  "professionalism_analysis": "<evaluation of project structure and delivery>",
+  "functional_analysis": "<detailed evaluation of functionality and correctness>",
+  "quality_analysis": "<evaluation of code organization and readability>",
+  "architecture_analysis": "<assessment of design patterns and structure>",
+  "security_analysis": "<CRITICAL: evaluation of security, validation, and reliability>",
+  "performance_analysis": "<assessment of efficiency and scalability>",
+  "documentation_analysis": "<evaluation of README and developer experience>",
   "strengths": ["<specific strength 1>", "<specific strength 2>", ...],
   "improvements": ["<specific improvement 1>", "<specific improvement 2>", ...],
   "reasoning_questions_quality": "<assessment of how well reasoning questions were answered>",
@@ -150,37 +148,41 @@ JOB REQUIREMENTS:
 
 EVALUATION INSTRUCTIONS:
 
-1. TECHNICAL CORRECTNESS (40 points):
+1. FUNCTIONAL CORRECTNESS (0–30 points):
    - Review the submission at the provided URL
    - Check if all functional requirements are implemented
-   - Test for edge cases and error scenarios
-   - Verify correct business logic
+   - Test for edge cases and expected inputs
+   - Verify correct business logic and behavior
 
-2. CODE QUALITY (20 points):
+2. CODE QUALITY & READABILITY (0–20 points):
    - Assess code organization and structure
    - Check for readability and maintainability
-   - Review adherence to best practices
+   - Review variable naming, function structure, comments
+   - Verify adherence to best practices
 
-3. PROBLEM-SOLVING (15 points):
+3. ARCHITECTURE & DESIGN PATTERNS (0–15 points):
+   - Evaluate folder structure and separation of concerns
+   - Check for proper abstractions and modularity
+   - Note: Be lenient for junior roles, stricter for mid/senior
+
+4. SECURITY & RELIABILITY (0–15 points):
+   - CRITICAL FOR FINTECH: Check input sanitization and validation
+   - Review authentication and authorization implementation
+   - Look for exposed sensitive data or credentials
+   - Assess error handling and rate limiting
+   - Mark down heavily if security issues are found
+
+5. PERFORMANCE & SCALABILITY (0–10 points):
    - Evaluate algorithm efficiency
-   - Assess design decisions and trade-offs
-   - Check for appropriate data structures
+   - Check for obvious bottlenecks
+   - Review caching, batching, pagination when relevant
+   - Assess data structure choices
 
-4. TESTING & RELIABILITY (10 points):
-   - Review error handling and input validation
-   - Check for test coverage (if tests are included)
-   - Assess overall code robustness
-
-5. DOCUMENTATION (10 points):
+6. DOCUMENTATION & DEVELOPER EXPERIENCE (0–10 points):
    - Review README quality and setup instructions
-   - Check if reasoning questions are answered thoroughly
-   - Assess code comments and documentation
-   - CRITICAL: Verify that reasoning questions demonstrate understanding, not copied answers
-
-6. PROFESSIONALISM (5 points):
-   - Review commit history and messages
-   - Check project structure and organization
-   - Assess deployment quality
+   - Check API documentation and code comments
+   - Verify environment variables are documented
+   - Assess overall developer experience
 
 ANTI-PLAGIARISM CHECKS:
 - Review if reasoning questions show genuine understanding
@@ -190,7 +192,7 @@ ANTI-PLAGIARISM CHECKS:
 
 PASS THRESHOLD: 70/100 points
 
-Note: If you cannot access the URL, provide evaluation based on available information and note the access issue. Consider the candidate's seniority level when scoring (${assignment.difficulty_level}).`
+Note: If you cannot access the URL, provide evaluation based on available information and note the access issue. Consider the candidate's seniority level when scoring (${assignment.difficulty_level}). Security is paramount for fintech roles.`
           }
         ],
       }),
@@ -218,12 +220,12 @@ Note: If you cannot access the URL, provide evaluation based on available inform
       } else {
         evaluation = {
           total_score: 70,
-          technical_correctness: 28,
+          functional_correctness: 21,
           code_quality: 14,
-          problem_solving: 11,
-          testing_reliability: 7,
-          documentation: 7,
-          professionalism: 3,
+          architecture_design: 11,
+          security_reliability: 11,
+          performance_scalability: 7,
+          documentation: 6,
           recommendation: aiMessage
         };
       }
@@ -231,12 +233,12 @@ Note: If you cannot access the URL, provide evaluation based on available inform
       console.error('Failed to parse AI evaluation:', parseError);
       evaluation = {
         total_score: 70,
-        technical_correctness: 28,
+        functional_correctness: 21,
         code_quality: 14,
-        problem_solving: 11,
-        testing_reliability: 7,
-        documentation: 7,
-        professionalism: 3,
+        architecture_design: 11,
+        security_reliability: 11,
+        performance_scalability: 7,
+        documentation: 6,
         recommendation: aiMessage
       };
     }
@@ -252,25 +254,25 @@ Overall Score: ${finalScore}/100
 Status: ${isPassed ? '✅ PASSED' : '❌ FAILED'}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-STANDARDIZED SCORING RUBRIC BREAKDOWN:
+FINTECH EVALUATION RUBRIC BREAKDOWN:
 
-1. Technical Correctness (40%): ${evaluation.technical_correctness}/40
-${evaluation.technical_analysis || 'Functional requirements and correctness evaluated.'}
+1. Functional Correctness (30%): ${evaluation.functional_correctness}/30
+${evaluation.functional_analysis || 'Functional requirements and correctness evaluated.'}
 
-2. Code Quality & Maintainability (20%): ${evaluation.code_quality}/20
-${evaluation.quality_analysis || 'Code organization and maintainability assessed.'}
+2. Code Quality & Readability (20%): ${evaluation.code_quality}/20
+${evaluation.quality_analysis || 'Code organization and readability assessed.'}
 
-3. Problem-Solving Approach (15%): ${evaluation.problem_solving}/15
-${evaluation.problem_solving_analysis || 'Algorithm efficiency and design decisions reviewed.'}
+3. Architecture & Design Patterns (15%): ${evaluation.architecture_design}/15
+${evaluation.architecture_analysis || 'Design patterns and architecture reviewed.'}
 
-4. Testing & Reliability (10%): ${evaluation.testing_reliability}/10
-${evaluation.testing_analysis || 'Error handling and testing evaluated.'}
+4. Security & Reliability (15%): ${evaluation.security_reliability}/15
+${evaluation.security_analysis || 'Security, validation, and reliability evaluated.'}
 
-5. Documentation & Clarity (10%): ${evaluation.documentation}/10
-${evaluation.documentation_analysis || 'Documentation and reasoning questions assessed.'}
+5. Performance & Scalability (10%): ${evaluation.performance_scalability}/10
+${evaluation.performance_analysis || 'Performance and scalability assessed.'}
 
-6. Professionalism & Delivery (5%): ${evaluation.professionalism}/5
-${evaluation.professionalism_analysis || 'Project structure and delivery quality reviewed.'}
+6. Documentation & Developer Experience (10%): ${evaluation.documentation}/10
+${evaluation.documentation_analysis || 'Documentation and developer experience reviewed.'}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 STRENGTHS:
@@ -306,9 +308,9 @@ ${evaluation.recommendation || (isPassed ? 'Candidate demonstrates solid technic
         final_score: finalScore,
         feedback: detailedFeedback,
         status: 'evaluated',
-        accuracy_score: evaluation.technical_correctness,
+        accuracy_score: evaluation.functional_correctness,
         clarity_score: evaluation.code_quality,
-        relevance_score: evaluation.problem_solving,
+        relevance_score: evaluation.architecture_design,
       })
       .eq('id', assignmentId);
 
@@ -337,12 +339,12 @@ ${evaluation.recommendation || (isPassed ? 'Candidate demonstrates solid technic
         status: newStatus,
         feedback: detailedFeedback,
         breakdown: {
-          technical_correctness: evaluation.technical_correctness,
+          functional_correctness: evaluation.functional_correctness,
           code_quality: evaluation.code_quality,
-          problem_solving: evaluation.problem_solving,
-          testing_reliability: evaluation.testing_reliability,
-          documentation: evaluation.documentation,
-          professionalism: evaluation.professionalism
+          architecture_design: evaluation.architecture_design,
+          security_reliability: evaluation.security_reliability,
+          performance_scalability: evaluation.performance_scalability,
+          documentation: evaluation.documentation
         }
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
